@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabase';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -54,7 +54,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <HashRouter>
+    <BrowserRouter>
       <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-black font-display">
         <Routes>
           <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
@@ -82,7 +82,7 @@ const App: React.FC = () => {
           />
         </Routes>
       </div>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 
