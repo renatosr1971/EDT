@@ -1,0 +1,8 @@
+{
+  "name": "Encomendas Empório Dashboard",
+  "description": "A sophisticated order management system for artisanal shops, featuring real-time dashboard, order tracking, reporting, and customer communication tools.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
