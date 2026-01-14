@@ -108,12 +108,12 @@ const OrderDetails: React.FC = () => {
   return (
     <PageLayout>
       <PageHeader>
-        <div className="flex items-center p-4 justify-between w-full">
-          <button onClick={() => navigate(-1)} className="text-white hover:text-primary transition-colors flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10">
+        <div className="flex items-center p-4 px-4 md:px-8 justify-between w-full">
+          <button onClick={() => navigate(-1)} className="text-white hover:text-primary transition-colors flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10 md:hidden">
             <span className="material-symbols-outlined text-2xl">arrow_back_ios_new</span>
           </button>
-          <h2 className="text-white text-lg font-bold leading-tight tracking-tight text-center">Pedido {order.orderNumber}</h2>
-          <div className="size-10"></div>
+          <h2 className="text-white text-xl md:text-2xl font-bold leading-tight tracking-tight flex-1 md:text-left text-center">Pedido {order.orderNumber}</h2>
+          <div className="size-10 md:hidden"></div>
         </div>
       </PageHeader>
 
@@ -188,9 +188,12 @@ const OrderDetails: React.FC = () => {
                 </div>
               </div>
             </div>
-            <a href={`tel:${order.phone}`} className="size-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors">
-              <span className="material-symbols-outlined">call</span>
-            </a>
+            <div className="flex flex-col items-end gap-1">
+              <a href={`tel:${order.phone}`} className="size-10 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors">
+                <span className="material-symbols-outlined">call</span>
+              </a>
+              <span className="text-[10px] text-gray-500 font-bold">{order.phone}</span>
+            </div>
           </div>
           <div className="p-4 bg-white/5 flex items-start gap-3">
             <span className="material-symbols-outlined text-gray-400 mt-0.5 shrink-0 text-[18px]">location_on</span>
@@ -247,13 +250,15 @@ const OrderDetails: React.FC = () => {
           </div>
         </section>
 
-        <button
-          onClick={() => window.print()}
-          className="w-full bg-primary hover:bg-[#0fd60f] text-black font-bold py-4 px-6 rounded-xl shadow-[0_0_15px_rgba(19,236,19,0.2)] transition-all active:scale-[0.98] mt-2 mb-10 flex items-center justify-center gap-2"
-        >
-          <span className="material-symbols-outlined">print</span>
-          Imprimir Comanda
-        </button>
+        <div className="mt-4 mb-32 md:mb-10 w-full max-w-md mx-auto">
+          <button
+            onClick={() => window.print()}
+            className="w-full bg-primary hover:bg-[#0fd60f] text-black font-bold py-4 px-6 rounded-xl shadow-[0_0_15px_rgba(19,236,19,0.2)] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined">print</span>
+            Imprimir Comanda
+          </button>
+        </div>
       </main>
     </PageLayout>
   );

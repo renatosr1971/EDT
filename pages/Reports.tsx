@@ -75,12 +75,12 @@ const Reports: React.FC = () => {
   return (
     <PageLayout className="pb-32">
       <PageHeader>
-        <div className="flex items-center justify-between p-4">
-          <button onClick={() => navigate(-1)} className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+        <div className="flex items-center justify-between p-4 px-4 md:px-8">
+          <button onClick={() => navigate(-1)} className="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10 transition-colors md:hidden">
             <span className="material-symbols-outlined text-white">arrow_back</span>
           </button>
-          <h1 className="text-lg font-bold leading-tight tracking-tight text-center flex-1">Relatórios</h1>
-          <div className="size-10"></div>
+          <h1 className="text-xl font-bold leading-tight tracking-tight md:text-2xl">Relatórios</h1>
+          <div className="size-10 md:hidden"></div>
         </div>
       </PageHeader>
 
@@ -96,8 +96,8 @@ const Reports: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 px-4 mb-6">
-        <div className="flex flex-col gap-3 rounded-2xl p-5 bg-surface-dark border border-white/5 shadow-sm">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 mb-6">
+        <div className="flex flex-col gap-3 rounded-2xl p-5 bg-surface-dark border border-white/5 shadow-sm col-span-2 md:col-span-1 lg:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-center size-10 rounded-full bg-primary/20 text-primary">
               <span className="material-symbols-outlined">payments</span>
@@ -105,11 +105,11 @@ const Reports: React.FC = () => {
           </div>
           <div>
             <p className="text-gray-400 text-sm font-medium">Total Faturado</p>
-            <p className="text-white text-xl font-bold tracking-tight mt-1">R$ {stats.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-white text-2xl font-bold tracking-tight mt-1">R$ {stats.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 rounded-2xl p-5 bg-surface-dark border border-white/5 shadow-sm">
+        <div className="flex flex-col gap-3 rounded-2xl p-5 bg-surface-dark border border-white/5 shadow-sm col-span-2 md:col-span-1 lg:col-span-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-center size-10 rounded-full bg-blue-500/20 text-blue-400">
               <span className="material-symbols-outlined">shopping_bag</span>
@@ -117,7 +117,7 @@ const Reports: React.FC = () => {
           </div>
           <div>
             <p className="text-gray-400 text-sm font-medium">Total de Pedidos</p>
-            <p className="text-white text-xl font-bold tracking-tight mt-1">{stats.totalOrders}</p>
+            <p className="text-white text-2xl font-bold tracking-tight mt-1">{stats.totalOrders}</p>
           </div>
         </div>
       </div>
@@ -189,8 +189,8 @@ const Reports: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-20 left-0 right-0 px-4 flex justify-center z-40">
-        <button onClick={() => window.print()} className="w-full max-w-md bg-primary hover:bg-green-400 text-black font-bold h-14 rounded-2xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]">
+      <div className="p-4 md:px-8 mb-20">
+        <button onClick={() => window.print()} className="w-full bg-primary hover:bg-green-400 text-black font-bold h-14 rounded-2xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]">
           <span className="material-symbols-outlined">print</span>
           Imprimir Relatório
         </button>

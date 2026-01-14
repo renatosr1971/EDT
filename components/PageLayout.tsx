@@ -7,8 +7,10 @@ interface PageLayoutProps {
 
 const PageLayout: React.FC<PageLayoutProps> = ({ children, className = '' }) => {
     return (
-        <div className={`flex flex-col min-h-full max-w-lg mx-auto bg-background-dark ${className}`}>
-            {children}
+        <div className={`flex flex-col min-h-screen bg-background-dark md:pl-64 ${className}`}>
+            <div className="flex-1 w-full max-w-7xl mx-auto px-0 md:px-6">
+                {children}
+            </div>
         </div>
     );
 };

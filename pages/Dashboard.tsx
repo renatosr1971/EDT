@@ -19,6 +19,15 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Atualização automática a cada 60 segundos (simulando F5 nos dados)
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 60000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -102,7 +111,7 @@ const Dashboard: React.FC = () => {
       </PageHeader>
 
       <div className="px-4 py-6">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
           <div className="flex flex-col gap-3 rounded-xl p-5 bg-surface-card shadow-sm border border-white/5 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <span className="material-symbols-outlined text-4xl">pending_actions</span>
@@ -163,9 +172,9 @@ const Dashboard: React.FC = () => {
           <button onClick={() => navigate('/orders')} className="text-sm font-bold text-primary hover:text-green-400 transition-colors">Ver Todos</button>
         </div>
 
-        <div className="flex flex-col gap-4 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
           {loading ? (
-            <div className="flex justify-center py-10">
+            <div className="flex justify-center py-10 col-span-full">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
             </div>
           ) : recentOrders.length > 0 ? (

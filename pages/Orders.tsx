@@ -14,6 +14,15 @@ const Orders: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
+
+    // Atualização automática a cada 60 segundos (simulando F5 nos dados)
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 60000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const fetchOrders = async () => {
@@ -120,9 +129,9 @@ const Orders: React.FC = () => {
         </div>
       </PageHeader>
 
-      <div className="flex flex-col gap-4 p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {loading ? (
-          <div className="flex justify-center py-20">
+          <div className="flex justify-center py-20 col-span-full">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : filteredOrders.length > 0 ? (

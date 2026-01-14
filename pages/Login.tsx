@@ -6,7 +6,6 @@ import { supabase } from '../supabase';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,21 +17,12 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        setError('Verifique seu e-mail para o link de confirmação!');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        navigate('/');
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'Ocorreu um erro durante a autenticação');
     } finally {
@@ -59,7 +49,7 @@ const Login: React.FC = () => {
         <div className="flex-1 flex flex-col px-6 py-8 w-full">
           <div className="text-center mb-8">
             <h1 className="text-white text-3xl font-bold tracking-tight mb-2">Encomendas Empório</h1>
-            <p className="text-neutral-400 text-base font-medium">{isSignUp ? 'Criar Conta de Gerente' : 'Login do Gerente'}</p>
+            <p className="text-neutral-400 text-base font-medium">Login do Gerente</p>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -105,11 +95,9 @@ const Login: React.FC = () => {
                   <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
                 </button>
               </div>
-              {!isSignUp && (
-                <div className="flex justify-end mt-1">
-                  <a className="text-sm font-medium text-neutral-400 hover:text-primary transition-colors" href="#">Esqueceu a senha?</a>
-                </div>
-              )}
+              <div className="flex justify-end mt-1">
+                <a className="text-sm font-medium text-neutral-400 hover:text-primary transition-colors" href="#">Esqueceu a senha?</a>
+              </div>
             </div>
 
             <button
@@ -118,27 +106,16 @@ const Login: React.FC = () => {
               className="mt-4 w-full h-14 bg-primary hover:bg-[#0fd60f] active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all rounded-xl flex items-center justify-center gap-2 group shadow-[0_0_20px_rgba(19,236,19,0.2)]"
             >
               <span className="text-background-dark font-bold text-lg tracking-wide uppercase">
-                {loading ? 'Processando...' : (isSignUp ? 'Cadastrar' : 'Entrar')}
+                {loading ? 'Processando...' : 'Entrar'}
               </span>
               {!loading && (
                 <span className="material-symbols-outlined text-background-dark group-hover:translate-x-1 transition-transform">
-                  {isSignUp ? 'person_add' : 'arrow_forward'}
+                  arrow_forward
                 </span>
               )}
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-neutral-400 text-sm">
-              {isSignUp ? 'Já tem uma conta?' : "Não tem uma conta?"}
-              <button
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="font-bold text-white hover:text-primary transition-colors ml-1"
-              >
-                {isSignUp ? 'Entrar' : 'Cadastrar'}
-              </button>
-            </p>
-          </div>
         </div>
       </div>
     </div>

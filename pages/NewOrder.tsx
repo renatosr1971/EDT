@@ -60,12 +60,12 @@ const NewOrder: React.FC = () => {
   return (
     <PageLayout>
       <PageHeader>
-        <div className="flex items-center p-4 justify-between w-full">
-          <button onClick={() => navigate(-1)} className="text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+        <div className="flex items-center p-4 px-4 md:px-8 justify-between w-full">
+          <button onClick={() => navigate(-1)} className="text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10 transition-colors md:hidden">
             <span className="material-symbols-outlined text-[24px]">arrow_back_ios_new</span>
           </button>
-          <h2 className="text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Novo Pedido</h2>
-          <div className="size-10"></div>
+          <h2 className="text-white text-xl md:text-2xl font-bold leading-tight tracking-tight flex-1 md:text-left text-center">Novo Pedido</h2>
+          <div className="size-10 md:hidden"></div>
         </div>
       </PageHeader>
 
@@ -186,23 +186,21 @@ const NewOrder: React.FC = () => {
             </label>
           </div>
 
-          <div className="fixed bottom-20 left-0 right-0 p-4 bg-background-dark border-t border-[#193319] z-40">
-            <div className="max-w-md mx-auto w-full">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 transition-transform active:scale-[0.98] shadow-[0_0_15px_rgba(19,236,19,0.3)] disabled:opacity-50"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-background-dark"></div>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-background-dark font-bold">check_circle</span>
-                    <span className="text-background-dark text-base font-bold">Salvar Pedido</span>
-                  </>
-                )}
-              </button>
-            </div>
+          <div className="mt-8 mb-32 md:mb-8">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex w-full max-w-md mx-auto items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 transition-transform active:scale-[0.98] shadow-[0_0_15px_rgba(19,236,19,0.3)] disabled:opacity-50"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-background-dark"></div>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-background-dark font-bold">check_circle</span>
+                  <span className="text-background-dark text-base font-bold">Salvar Pedido</span>
+                </>
+              )}
+            </button>
           </div>
         </form>
       </main>
