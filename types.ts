@@ -31,6 +31,9 @@ export interface Order {
   deliveryType: 'Retirada' | 'Entrega';
   pickupDate: string;
   cancellationReason?: string;
+  pickedUpBy?: string;
+  pickedUpAt?: string;
+  deliveredBy?: string;
 }
 
 export interface KPIStats {

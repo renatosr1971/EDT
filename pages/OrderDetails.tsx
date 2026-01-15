@@ -16,6 +16,13 @@ const OrderDetails: React.FC = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [deliveryForm, setDeliveryForm] = useState({
+    pickedUpBy: '',
+    pickedUpAt: '',
+    deliveredBy: ''
+  });
+
   useEffect(() => {
     fetchOrderDetails();
   }, [id]);
@@ -51,6 +58,9 @@ const OrderDetails: React.FC = () => {
           deliveryType: data.delivery_type as 'Retirada' | 'Entrega',
           pickupDate: data.pickup_date,
           cancellationReason: data.cancellation_reason,
+          pickedUpBy: data.picked_up_by,
+          pickedUpAt: data.picked_up_at,
+          deliveredBy: data.delivered_by,
           items: data.order_items.map((item: any) => ({
             id: item.id,
             name: item.name,
@@ -69,7 +79,7 @@ const OrderDetails: React.FC = () => {
     }
   };
 
-  const updateStatus = async (newStatus: OrderStatus, reason?: string) => {
+  const updateStatus = async (newStatus: OrderStatus, reason?: string, deliveryData?: typeof deliveryForm) => {
     if (order?.status === newStatus || updatingStatus) return;
 
     try {
@@ -80,6 +90,11 @@ const OrderDetails: React.FC = () => {
       if (newStatus === OrderStatus.CANCELLED && reason) {
         updateData.cancellation_reason = reason;
       }
+      if (newStatus === OrderStatus.DELIVERED && deliveryData) {
+        updateData.picked_up_by = deliveryData.pickedUpBy;
+        updateData.picked_up_at = deliveryData.pickedUpAt;
+        updateData.delivered_by = deliveryData.deliveredBy;
+      }
 
       const { error } = await supabase
         .from('orders')
@@ -87,11 +102,19 @@ const OrderDetails: React.FC = () => {
         .eq('id', id);
 
       if (error) throw error;
-      setOrder(prev => prev ? { ...prev, status: newStatus, cancellationReason: reason || prev.cancellationReason } : null);
+      setOrder(prev => prev ? {
+        ...prev,
+        status: newStatus,
+        cancellationReason: reason || prev.cancellationReason,
+        pickedUpBy: deliveryData?.pickedUpBy || prev.pickedUpBy,
+        pickedUpAt: deliveryData?.pickedUpAt || prev.pickedUpAt,
+        deliveredBy: deliveryData?.deliveredBy || prev.deliveredBy
+      } : null);
       setShowCancelModal(false);
+      setShowDeliveryModal(false);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
-      alert('Não foi possível atualizar o status. Tente novamente.');
+      alert(`Não foi possível atualizar o status. Erro: ${(error as any).message || 'Desconhecido'}`);
     } finally {
       setUpdatingStatus(null);
     }
@@ -100,6 +123,12 @@ const OrderDetails: React.FC = () => {
   const handleStatusClick = (status: OrderStatus) => {
     if (status === OrderStatus.CANCELLED) {
       setShowCancelModal(true);
+    } else if (status === OrderStatus.DELIVERED) {
+      // Pre-fill date with current date/time
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Adjust to local if needed, but simple ISO string slice is better for datetime-local
+      setDeliveryForm(prev => ({ ...prev, pickedUpAt: now.toISOString().slice(0, 16) }));
+      setShowDeliveryModal(true);
     } else {
       updateStatus(status);
     }
@@ -153,11 +182,12 @@ const OrderDetails: React.FC = () => {
                 const buttonIndex = statusOrder.indexOf(status);
                 const isPreviousStatus = currentIndex !== -1 && buttonIndex !== -1 && buttonIndex < currentIndex;
                 const isCancelled = order.status === OrderStatus.CANCELLED;
+                const isDelivered = order.status === OrderStatus.DELIVERED;
 
                 return (
                   <button
                     key={status}
-                    disabled={!!updatingStatus || isCancelled || isPreviousStatus}
+                    disabled={!!updatingStatus || isCancelled || (isDelivered && status !== OrderStatus.DELIVERED) || isPreviousStatus}
                     onClick={() => handleStatusClick(status)}
                     className={`flex-1 min-w-[80px] flex flex-col items-center justify-center py-2 px-2 rounded-lg text-xs font-medium transition-all
                     ${order.status === status
@@ -170,7 +200,7 @@ const OrderDetails: React.FC = () => {
                       }
                     ${updatingStatus === status ? 'animate-pulse opacity-70' : ''}
                     disabled:cursor-wait
-                    ${order.status === OrderStatus.CANCELLED && order.status !== status ? 'opacity-30' : ''}
+                    ${(order.status === OrderStatus.CANCELLED || (order.status === OrderStatus.DELIVERED && status !== OrderStatus.DELIVERED)) && order.status !== status ? 'opacity-30' : ''}
                   `}
                   >
                     <span className="material-symbols-outlined text-xl mb-1">
@@ -195,6 +225,31 @@ const OrderDetails: React.FC = () => {
               <p className="text-sm text-gray-300 italic">"{order.cancellationReason}"</p>
             </div>
           )}
+
+          {order.status === OrderStatus.DELIVERED && order.pickedUpBy && (
+            <div className="mt-3 p-3 bg-surface-dark border border-white/5 rounded-xl">
+              <div className="flex items-center gap-2 mb-2 text-primary">
+                <span className="material-symbols-outlined text-sm">local_shipping</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Dados da Entrega</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold">Retirado por</p>
+                  <p className="text-sm text-white">{order.pickedUpBy}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold">Data/Hora Retirada</p>
+                  <p className="text-sm text-white">
+                    {order.pickedUpAt ? new Date(order.pickedUpAt).toLocaleString('pt-BR') : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold">Entregue por (Staff)</p>
+                  <p className="text-sm text-white">{order.deliveredBy}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="bg-surface-dark rounded-xl shadow-sm border border-white/5 overflow-hidden">
@@ -211,11 +266,17 @@ const OrderDetails: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-white text-base font-bold leading-tight">{order.customerName}</h4>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="material-symbols-outlined text-gray-400 text-[14px]">event</span>
-                  <p className="text-gray-400 text-xs font-medium">
-                    {new Date(order.createdAt).toLocaleDateString('pt-BR')} • {order.deliveryType} • {order.deliveryType === 'Retirada' ? 'Retirada' : 'Entrega'}: {new Date(order.pickupDate).toLocaleDateString('pt-BR')}
-                  </p>
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-gray-400 text-[14px]">event</span>
+                    <span className="text-gray-400 text-xs font-medium">Dt Pedido: </span>
+                    <span className="text-white text-xs font-bold">{new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-gray-400 text-[14px]">schedule</span>
+                    <span className="text-gray-400 text-xs font-medium">Dt Retirada: </span>
+                    <span className="text-primary text-xs font-bold">{new Date(order.pickupDate).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -344,6 +405,86 @@ const OrderDetails: React.FC = () => {
                     <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
                   ) : (
                     'Confirmar'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Entrega */}
+      {showDeliveryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeliveryModal(false)}></div>
+          <div className="relative bg-surface-dark border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-5 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-white font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-green-500">local_shipping</span>
+                Confirmar Entrega
+              </h3>
+              <button
+                onClick={() => setShowDeliveryModal(false)}
+                className="text-gray-500 hover:text-white"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-5 flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Quem Retirou?</label>
+                <input
+                  type="text"
+                  value={deliveryForm.pickedUpBy}
+                  onChange={(e) => setDeliveryForm(prev => ({ ...prev, pickedUpBy: e.target.value }))}
+                  placeholder="Nome da pessoa"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-green-500 transition-all placeholder:text-gray-600"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Data/Hora da Retirada</label>
+                <input
+                  type="datetime-local"
+                  value={deliveryForm.pickedUpAt}
+                  onChange={(e) => setDeliveryForm(prev => ({ ...prev, pickedUpAt: e.target.value }))}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-green-500 transition-all placeholder:text-gray-600 [color-scheme:dark]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Entregue por (Staff)</label>
+                <input
+                  type="text"
+                  value={deliveryForm.deliveredBy}
+                  onChange={(e) => setDeliveryForm(prev => ({ ...prev, deliveredBy: e.target.value }))}
+                  placeholder="Nome do funcionário"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-green-500 transition-all placeholder:text-gray-600"
+                />
+              </div>
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={() => setShowDeliveryModal(false)}
+                  className="flex-1 py-3 px-4 rounded-xl border border-white/5 text-gray-400 font-bold text-sm hover:bg-white/5 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={!deliveryForm.pickedUpBy || !deliveryForm.pickedUpAt || !deliveryForm.deliveredBy || !!updatingStatus}
+                  onClick={() => updateStatus(OrderStatus.DELIVERED, undefined, deliveryForm)}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
+                    ${(!deliveryForm.pickedUpBy || !deliveryForm.pickedUpAt || !deliveryForm.deliveredBy)
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-green-500 text-white hover:bg-green-600 shadow-[0_4px_15px_rgba(34,197,94,0.2)]'
+                    }
+                  `}
+                >
+                  {updatingStatus ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                  ) : (
+                    'Concluir'
                   )}
                 </button>
               </div>

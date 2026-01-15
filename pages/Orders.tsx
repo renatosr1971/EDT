@@ -51,6 +51,9 @@ const Orders: React.FC = () => {
           totalValue: o.total_value,
           deliveryType: o.delivery_type as 'Retirada' | 'Entrega',
           pickupDate: o.pickup_date,
+          pickedUpBy: o.picked_up_by,
+          pickedUpAt: o.picked_up_at,
+          deliveredBy: o.delivered_by,
         }));
         setOrders(mappedOrders);
       }
@@ -172,11 +175,11 @@ const Orders: React.FC = () => {
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   <div className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                    <span>{getRelativeTime(order.createdAt)}</span>
+                    <span>Dt Pedido: {new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
                   </div>
                   <div className="flex items-center gap-1 text-primary/80">
                     <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
-                    <span>{order.deliveryType}: {new Date(order.pickupDate).toLocaleDateString('pt-BR')}</span>
+                    <span>Dt Retirada: {new Date(order.pickupDate).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                 </div>
               </div>
