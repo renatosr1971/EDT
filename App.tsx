@@ -8,7 +8,7 @@ import Orders from './pages/Orders';
 import OrderDetails from './pages/OrderDetails';
 import NewOrder from './pages/NewOrder';
 import Reports from './pages/Reports';
-import Settings from './pages/Settings';
+import Users from './pages/Users';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; session: any }> = ({ children, session }) => {
@@ -71,7 +71,7 @@ const App: React.FC = () => {
                       <Route path="/order/:id" element={<OrderDetails />} />
                       <Route path="/new-order" element={<NewOrder />} />
                       <Route path="/reports" element={<Reports />} />
-                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/users" element={<Users />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </div>

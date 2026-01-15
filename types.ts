@@ -1,9 +1,9 @@
-
 export enum OrderStatus {
   PENDING = 'Pendente',
   PRODUCTION = 'Em Produção',
   COMPLETED = 'Concluído',
-  DELIVERED = 'Entregue'
+  DELIVERED = 'Entregue',
+  CANCELLED = 'Cancelado'
 }
 
 export interface OrderItem {
@@ -30,6 +30,7 @@ export interface Order {
   totalValue: number;
   deliveryType: 'Retirada' | 'Entrega';
   pickupDate: string;
+  cancellationReason?: string;
 }
 
 export interface KPIStats {

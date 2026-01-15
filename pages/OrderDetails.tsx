@@ -13,6 +13,8 @@ const OrderDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [updatingStatus, setUpdatingStatus] = useState<OrderStatus | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     fetchOrderDetails();
@@ -48,6 +50,7 @@ const OrderDetails: React.FC = () => {
           totalValue: data.total_value,
           deliveryType: data.delivery_type as 'Retirada' | 'Entrega',
           pickupDate: data.pickup_date,
+          cancellationReason: data.cancellation_reason,
           items: data.order_items.map((item: any) => ({
             id: item.id,
             name: item.name,
@@ -66,25 +69,39 @@ const OrderDetails: React.FC = () => {
     }
   };
 
-  const updateStatus = async (newStatus: OrderStatus) => {
+  const updateStatus = async (newStatus: OrderStatus, reason?: string) => {
     if (order?.status === newStatus || updatingStatus) return;
 
     try {
       setUpdatingStatus(newStatus);
       if (!supabase || !id) return;
 
+      const updateData: any = { status: newStatus };
+      if (newStatus === OrderStatus.CANCELLED && reason) {
+        updateData.cancellation_reason = reason;
+      }
+
       const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
-      setOrder(prev => prev ? { ...prev, status: newStatus } : null);
+      setOrder(prev => prev ? { ...prev, status: newStatus, cancellationReason: reason || prev.cancellationReason } : null);
+      setShowCancelModal(false);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       alert('Não foi possível atualizar o status. Tente novamente.');
     } finally {
       setUpdatingStatus(null);
+    }
+  };
+
+  const handleStatusClick = (status: OrderStatus) => {
+    if (status === OrderStatus.CANCELLED) {
+      setShowCancelModal(true);
+    } else {
+      updateStatus(status);
     }
   };
 
@@ -130,40 +147,54 @@ const OrderDetails: React.FC = () => {
           </div>
           <div className="bg-surface-dark rounded-xl p-1.5 shadow-sm border border-white/5">
             <div className="flex p-1 gap-1 overflow-x-auto no-scrollbar">
-              {Object.values(OrderStatus).map((status) => (
-                <button
-                  key={status}
-                  disabled={!!updatingStatus}
-                  onClick={() => updateStatus(status)}
-                  className={`flex-1 min-w-[80px] flex flex-col items-center justify-center py-2 px-2 rounded-lg text-xs font-medium transition-all
+              {Object.values(OrderStatus).map((status) => {
+                const statusOrder = [OrderStatus.PENDING, OrderStatus.PRODUCTION, OrderStatus.COMPLETED, OrderStatus.DELIVERED];
+                const currentIndex = statusOrder.indexOf(order.status as OrderStatus);
+                const buttonIndex = statusOrder.indexOf(status);
+                const isPreviousStatus = currentIndex !== -1 && buttonIndex !== -1 && buttonIndex < currentIndex;
+                const isCancelled = order.status === OrderStatus.CANCELLED;
+
+                return (
+                  <button
+                    key={status}
+                    disabled={!!updatingStatus || isCancelled || isPreviousStatus}
+                    onClick={() => handleStatusClick(status)}
+                    className={`flex-1 min-w-[80px] flex flex-col items-center justify-center py-2 px-2 rounded-lg text-xs font-medium transition-all
                     ${order.status === status
-                      ? 'bg-primary text-black shadow-[0_0_10px_rgba(19,236,19,0.3)]'
-                      : 'text-gray-400 hover:bg-white/5'
-                    }
+                        ? (status === OrderStatus.PENDING ? 'bg-yellow-500 text-black shadow-[0_0_10px_rgba(234,179,8,0.3)]' :
+                          status === OrderStatus.PRODUCTION ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.3)]' :
+                            status === OrderStatus.COMPLETED ? 'bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.3)]' :
+                              status === OrderStatus.DELIVERED ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.3)]' :
+                                'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.3)]')
+                        : 'text-gray-400 hover:bg-white/5'
+                      }
                     ${updatingStatus === status ? 'animate-pulse opacity-70' : ''}
                     disabled:cursor-wait
+                    ${order.status === OrderStatus.CANCELLED && order.status !== status ? 'opacity-30' : ''}
                   `}
-                >
-                  <span className="material-symbols-outlined text-xl mb-1">
-                    {status === OrderStatus.PENDING ? 'hourglass_empty' :
-                      status === OrderStatus.PRODUCTION ? 'skillet' :
-                        status === OrderStatus.COMPLETED ? 'check_circle' : 'local_shipping'}
-                  </span>
-                  <span className="truncate w-full text-center">{status}</span>
-                </button>
-              ))}
+                  >
+                    <span className="material-symbols-outlined text-xl mb-1">
+                      {status === OrderStatus.PENDING ? 'hourglass_empty' :
+                        status === OrderStatus.PRODUCTION ? 'skillet' :
+                          status === OrderStatus.COMPLETED ? 'check_circle' :
+                            status === OrderStatus.CANCELLED ? 'cancel' : 'local_shipping'}
+                    </span>
+                    <span className="truncate w-full text-center">{status}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between px-2">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-gray-500 text-sm">notifications_active</span>
-              <span className="text-xs text-gray-400 font-medium">Notificar gerente por e-mail</span>
+
+          {order.status === OrderStatus.CANCELLED && order.cancellationReason && (
+            <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <div className="flex items-center gap-2 mb-1 text-red-500">
+                <span className="material-symbols-outlined text-sm">info</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Motivo do Cancelamento</span>
+              </div>
+              <p className="text-sm text-gray-300 italic">"{order.cancellationReason}"</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input defaultChecked className="sr-only peer" type="checkbox" />
-              <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-            </label>
-          </div>
+          )}
         </section>
 
         <section className="bg-surface-dark rounded-xl shadow-sm border border-white/5 overflow-hidden">
@@ -260,6 +291,66 @@ const OrderDetails: React.FC = () => {
           </button>
         </div>
       </main>
+
+      {/* Modal de Cancelamento */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCancelModal(false)}></div>
+          <div className="relative bg-surface-dark border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-5 border-b border-white/5 flex items-center justify-between">
+              <h3 className="text-white font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-red-500">cancel</span>
+                Cancelar Pedido
+              </h3>
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="text-gray-500 hover:text-white"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-5">
+              <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                Por favor, informe o motivo do cancelamento. Este campo é <span className="text-red-500 font-bold uppercase">obrigatório</span>.
+              </p>
+
+              <textarea
+                autoFocus
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Ex: Cliente desistiu do pedido..."
+                className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:ring-1 focus:ring-red-500 transition-all resize-none placeholder:text-gray-600"
+              />
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="flex-1 py-3 px-4 rounded-xl border border-white/5 text-gray-400 font-bold text-sm hover:bg-white/5 transition-all"
+                >
+                  Voltar
+                </button>
+                <button
+                  disabled={!cancelReason.trim() || !!updatingStatus}
+                  onClick={() => updateStatus(OrderStatus.CANCELLED, cancelReason)}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
+                    ${cancelReason.trim()
+                      ? 'bg-red-500 text-white hover:bg-red-600 shadow-[0_4px_15px_rgba(239,68,68,0.2)]'
+                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {updatingStatus ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                  ) : (
+                    'Confirmar'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </PageLayout>
   );
 };

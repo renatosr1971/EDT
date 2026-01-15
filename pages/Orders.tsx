@@ -119,7 +119,12 @@ const Orders: React.FC = () => {
               key={f}
               onClick={() => setFilter(f as any)}
               className={`flex h-9 min-w-fit items-center justify-center gap-x-2 rounded-full px-4 transition border ${filter === f
-                ? 'bg-primary border-primary text-black font-bold shadow-[0_0_10px_rgba(19,236,19,0.2)]'
+                ? (f === 'Todos' ? 'bg-primary border-primary text-black' :
+                  f === OrderStatus.PENDING ? 'bg-yellow-500 border-yellow-500 text-black shadow-[0_0_10px_rgba(234,179,8,0.2)]' :
+                    f === OrderStatus.PRODUCTION ? 'bg-blue-500 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.2)]' :
+                      f === OrderStatus.COMPLETED ? 'bg-green-500 border-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.2)]' :
+                        f === OrderStatus.DELIVERED ? 'bg-white border-white text-black shadow-[0_0_10px_rgba(255,255,255,0.2)]' :
+                          'bg-red-500 border-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.2)]') + ' font-bold'
                 : 'bg-surface-dark border-white/10 text-gray-300 font-medium hover:bg-white/5'
                 }`}
             >
@@ -151,7 +156,9 @@ const Orders: React.FC = () => {
                     <h3 className="text-base font-bold text-white leading-tight">{order.customerName}</h3>
                     <span className={`text-xs font-medium mt-0.5 ${order.status === OrderStatus.PENDING ? 'text-yellow-400' :
                       order.status === OrderStatus.PRODUCTION ? 'text-blue-400' :
-                        'text-primary'
+                        order.status === OrderStatus.COMPLETED ? 'text-green-400' :
+                          order.status === OrderStatus.DELIVERED ? 'text-white' :
+                            'text-red-400'
                       }`}>{order.status}</span>
                   </div>
                 </div>

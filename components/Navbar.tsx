@@ -1,11 +1,30 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkUserRole();
+  }, []);
+
+  const checkUserRole = async () => {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      setIsAdmin(data?.role === 'admin');
+    }
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -23,7 +42,7 @@ const Navbar: React.FC = () => {
     { name: 'Início', path: '/', icon: 'dashboard' },
     { name: 'Pedidos', path: '/orders', icon: 'list_alt' },
     { name: 'Relatórios', path: '/reports', icon: 'analytics' },
-    { name: 'Ajustes', path: '/settings', icon: 'settings' },
+    ...(isAdmin ? [{ name: 'Usuários', path: '/users', icon: 'group' }] : []),
   ];
 
   return (
@@ -51,13 +70,6 @@ const Navbar: React.FC = () => {
             </button>
           </div>
 
-          <button
-            onClick={() => navigate('/settings')}
-            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive('/settings') ? 'text-primary' : 'text-gray-500'}`}
-          >
-            <span className={`material-symbols-outlined text-[22px] ${isActive('/settings') ? 'font-variation-fill' : ''}`}>settings</span>
-            <span className="text-[10px] font-medium">Ajustes</span>
-          </button>
 
           <button
             onClick={handleLogout}
