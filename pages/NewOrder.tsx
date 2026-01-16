@@ -13,22 +13,121 @@ const NewOrder: React.FC = () => {
     customerName: '',
     phone: '',
     orderDate: new Date().toISOString().split('T')[0],
-    pickupDate: new Date().toISOString().split('T')[0],
+    pickupDate: '', // Format: "DD/MM às HHh"
     items: '',
-    totalValue: '',
+    totalValue: '', // Format: "R$ 0,00"
     deliveryType: 'Retirada' as 'Retirada' | 'Entrega'
   });
+
+  // Helper to format currency on input
+  const formatCurrency = (value: string) => {
+    // Remove non-numeric characters
+    const numericValue = value.replace(/\D/g, '');
+
+    // Convert to cents and then to decimal string
+    const floatValue = Number(numericValue) / 100;
+
+    // Format as BRL currency
+    return floatValue.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
+
+  // Helper to parse currency string back to number
+  const parseCurrency = (value: string) => {
+    if (!value) return 0;
+    // Remove "R$", spaces, and dots (thousand separators)
+    // Example: "R$ 1.234,56" -> "1234,56"
+    const cleanOne = value.replace('R$', '').replace(/\./g, '').replace(/\s/g, '');
+
+    // Replace comma with dot for float parsing
+    // Example: "1234,56" -> "1234.56"
+    const dotValue = cleanOne.replace(',', '.');
+
+    const parsed = parseFloat(dotValue);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Helper to format date input while typing
+  const formatPickupDateInput = (value: string) => {
+    return value;
+  };
+
+  const handlePickupDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, pickupDate: e.target.value });
+  };
+
+  const handleTotalValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    // Keep only numbers and comma
+    // Note: We strip everything else to re-format.
+    // If user types comma, we interpret as starting decimals.
+
+    const numericOnly = newValue.replace(/[^0-9]/g, '');
+    const formatted = formatCurrency(numericOnly);
+    setFormData({ ...formData, totalValue: formatted });
+  };
+
+  const parsePickupDate = (dateStr: string): string | null => {
+    // Expected format: "DD/MM às HHh" e.g., "21/01 às 9h"
+    // Regex to capture Day, Month, Hour
+    const regex = /^(\d{2})\/(\d{2})\s+às\s+(\d{1,2})h$/;
+    const match = dateStr.match(regex);
+
+    if (!match) return null;
+
+    const [_, day, month, hour] = match;
+    const year = new Date().getFullYear();
+
+    // Create date. Note: month is 0-indexed in JS Date
+    const date = new Date(year, parseInt(month) - 1, parseInt(day), parseInt(hour), 0, 0);
+
+    // Handle year rollover precaution? E.g. if we are in Dec and booking for Jan?
+    // For now assuming current year as per standard requesting logic.
+
+    return date.toISOString();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
+
+      // Parse values
+      const totalValueFloat = parseCurrency(formData.totalValue);
+      const pickupDateISO = parsePickupDate(formData.pickupDate);
+
+      // Log for debugging
+      console.log('Original Total Value:', formData.totalValue);
+      console.log('Parsed Float:', totalValueFloat);
+      console.log('Parsed ISO Date:', pickupDateISO);
+
+      if (isNaN(totalValueFloat) || totalValueFloat === 0) {
+        // Allow 0? Assuming order must have value.
+        if (totalValueFloat < 0) {
+          alert('Valor total inválido.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (!pickupDateISO) {
+        alert('Formato da Data de Retirada inválido. Use o formato: "DD/MM às HHh" (ex: 21/01 às 9h)');
+        setLoading(false);
+        return;
+      }
+
       if (!supabase) return;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
       const orderNumber = `#EMP-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // Ensure we send a NUMBER. 
+      // User reported "177,00" -> "17700". This usually happens if comma is ignored.
+      // With our parseCurrency, "177,00" -> 177.00.
 
       const { data, error } = await supabase
         .from('orders')
@@ -37,9 +136,9 @@ const NewOrder: React.FC = () => {
           customer_name: formData.customerName,
           phone: formData.phone,
           items_summary: formData.items,
-          total_value: parseFloat(formData.totalValue),
+          total_value: totalValueFloat,
           delivery_type: formData.deliveryType,
-          pickup_date: formData.pickupDate,
+          pickup_date: pickupDateISO,
           status: OrderStatus.PENDING,
           user_id: user.id
         }])
@@ -161,25 +260,25 @@ const NewOrder: React.FC = () => {
               <p className="text-white text-sm font-medium pb-2">Data de Retirada/Entrega</p>
               <input
                 value={formData.pickupDate}
-                onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
+                onChange={handlePickupDateChange}
                 className="form-input block w-full rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-primary border border-[#326732] bg-[#193319] h-14 px-4 transition-all"
-                type="date"
+                type="text"
+                placeholder="Ex: 21/01 às 9h"
+                required
               />
+              <p className="text-xs text-[#92c992] mt-1 ml-1">Formato: DD/MM às HHh</p>
             </label>
 
             <label className="flex flex-col w-full">
               <p className="text-white text-sm font-medium pb-2">Valor Total</p>
               <div className="relative flex items-center">
-                <div className="absolute left-0 top-0 bottom-0 pl-4 flex items-center pointer-events-none">
-                  <span className="text-[#92c992] font-bold">R$</span>
-                </div>
+                {/* Removed fixed prefix since it's part of the input value now */}
                 <input
                   value={formData.totalValue}
-                  onChange={(e) => setFormData({ ...formData, totalValue: e.target.value })}
-                  className="form-input block w-full rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-primary border border-[#326732] bg-[#193319] h-14 pl-12 pr-4 text-lg font-semibold text-right transition-all"
-                  placeholder="0,00"
-                  type="number"
-                  step="0.01"
+                  onChange={handleTotalValueChange}
+                  className="form-input block w-full rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-primary border border-[#326732] bg-[#193319] h-14 px-4 text-lg font-semibold text-right transition-all"
+                  placeholder="R$ 0,00"
+                  type="text"
                   required
                 />
               </div>
