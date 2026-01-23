@@ -7,7 +7,7 @@ import { Order, OrderStatus } from '../types';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<OrderStatus | 'Todos'>('Todos');
+  const [filter, setFilter] = useState<OrderStatus | 'Todos'>(OrderStatus.PENDING);
   const [search, setSearch] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
