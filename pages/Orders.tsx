@@ -157,11 +157,11 @@ const Orders: React.FC = () => {
                   />
                   <div className="flex flex-col">
                     <h3 className="text-base font-bold text-white leading-tight">{order.customerName}</h3>
-                    <span className={`text-xs font-medium mt-0.5 ${order.status === OrderStatus.PENDING ? 'text-yellow-400' :
-                      order.status === OrderStatus.PRODUCTION ? 'text-blue-400' :
-                        order.status === OrderStatus.COMPLETED ? 'text-green-400' :
-                          order.status === OrderStatus.DELIVERED ? 'text-white' :
-                            'text-red-400'
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold shadow-sm ${order.status === OrderStatus.PENDING ? 'bg-yellow-500 text-black' :
+                      order.status === OrderStatus.PRODUCTION ? 'bg-blue-500 text-white' :
+                        order.status === OrderStatus.COMPLETED ? 'bg-green-500 text-white' :
+                          order.status === OrderStatus.DELIVERED ? 'bg-white text-black' :
+                            'bg-red-500 text-white'
                       }`}>{order.status}</span>
                   </div>
                 </div>
